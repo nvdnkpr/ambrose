@@ -120,18 +120,22 @@ AMBROSE.dagView = function () {
             //add content to the tooltip when a node
             //is hovered
             onShow: function(tip, node, isLeaf, domElement) {
-              var whiteList = ['jobId', 'aliases', 'features', 'map progress', 'reduce progress'],
+              var whiteList = [{ key: 'jobId', name: 'Job ID'},
+                               { key: 'aliases', name: 'Aliases'},
+                               { key: 'features', name: 'Features'},
+                               { key: 'map progress', name: 'Mappers'},
+                               { key: 'reduce progress', name: 'Reducers'}],
                   data = node.data,
                   html = "<div class=\"tip-title\">" + node.name
                 + "</div><div class=\'closetip\'>&#10006;</div><div class=\"tip-text\"><ul>";
 
               whiteList.forEach(function(k) {
-                if (k in data) {
-                  if (k == 'jobId') {
-                    html += "<li><b>" + k + "</b>: <a href=\"http://hadoop-dw-jt.smf1.twitter.com:50030/jobdetails.jsp?jobid=" +
-                      data[k] + "\" target=\"__blank\">" + data[k] + "</a></li>";
+                if (k.key in data) {
+                  if (k.key == 'jobId') {
+                    html += "<li><b>" + k.name + "</b>: <a href=\"http://hadoop-dw-jt.smf1.twitter.com:50030/jobdetails.jsp?jobid=" +
+                      data[k.key] + "\" target=\"__blank\">" + data[k.key] + "</a></li>";
                   } else {
-                    html += "<li><b>" + k + "</b>: <span id=\"" + data.jobId + "_" + k + "\">" + data[k] + "</span></li>";
+                    html += "<li><b>" + k.name + "</b>: <span id=\"" + data.jobId + "_" + k.key + "\">" + data[k.key] + "</span></li>";
                   }
                 }
               });
@@ -205,20 +209,6 @@ AMBROSE.dagView = function () {
           });
         });
 
-        //var diffX = maxX - minX,
-            //diffY = maxY - minY;
-
-        //var xScale = diffX > canvasWidth ? (diffX - canvasWidth) : 0,
-            //yScale = diffY > canvasHeight ? (diffY - canvasHeight) : 0;
-
-        //if (xScale || yScale) {
-          //if (xScale > yScale) {
-            //viz.canvas.scale(canvasWidth / diffX, canvasWidth / diffX);
-          //} else {
-            //viz.canvas.scale(canvasHeight / diffY, canvasHeight / diffY);
-          //}
-        //}
-
         this.extendViz(viz);
 
         viz.plot();
@@ -252,11 +242,13 @@ AMBROSE.dagView = function () {
       tips.onMouseOver = wrapper(cond, onMouseOver);
       tips.onMouseOut  = wrapper(cond, onMouseOut);
 
+      //all conditions to hide tip
       tips.tip.addEventListener('click', function(e) {
         if (~e.target.className.indexOf('closetip')) {
           hidetip(e);
         }
       }, false);
+
       viz.canvas.canvases[0].canvas.addEventListener('mousedown', hidetip, false);
       viz.canvas.canvases[0].canvas.addEventListener('mousewheel', hidetip, false);
       viz.canvas.canvases[0].canvas.addEventListener('DOMMouseScroll', hidetip, false);
@@ -277,7 +269,7 @@ AMBROSE.dagView = function () {
       n.data.status = type;
 
       if (job.mapProgress) {
-        n.data['map progress'] = (Math.round(job.mapProgress * 100)) + '%';
+        n.data['map progress'] = AMBROSE.util.task_progress_string(job.totalMappers, job.mapProgress);
         entry = $id(job.jobId + '_map progress');
         if (entry) {
           entry.innerHTML = n.data['map progress'];
@@ -285,7 +277,7 @@ AMBROSE.dagView = function () {
       }
 
       if (job.reduceProgress) {
-        n.data['reduce progress'] = (Math.round(job.reduceProgress * 100)) + '%';
+        n.data['reduce progress'] = AMBROSE.util.task_progress_string(job.totalReducers, job.reduceProgress);
         entry = $id(job.jobId + '_reduce progress');
         if (entry) {
           entry.innerHTML = n.data['reduce progress'];
